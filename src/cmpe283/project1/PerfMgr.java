@@ -1,7 +1,6 @@
 package cmpe283.project1;
 
 import java.util.HashMap;
-import java.util.Map;
 
 import com.vmware.vim25.PerfCounterInfo;
 import com.vmware.vim25.PerfEntityMetricBase;

@@ -10,6 +10,7 @@ import com.vmware.vim25.HostConfigInfo;
 import com.vmware.vim25.HostVirtualNic;
 import com.vmware.vim25.VirtualMachineCapability;
 import com.vmware.vim25.VirtualMachineConfigInfo;
+import com.vmware.vim25.mo.Alarm;
 import com.vmware.vim25.mo.AlarmManager;
 import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.HostSystem;
@@ -21,8 +22,8 @@ import com.vmware.vim25.mo.VirtualMachine;
 
 public class AvailabilityManager {
 	public static ServiceInstance vCenter;	
+	public static Alarm powerOffAlarm;
 	private List<VHost> vHosts;
-	private ManagedEntity[] vms;
 	
 	public AvailabilityManager (String url, String user, String pwd) throws Exception {
 		vCenter = new ServiceInstance(new URL(url), user, pwd, true);
@@ -36,14 +37,14 @@ public class AvailabilityManager {
 			}
 		}
 		
-		
-		//Alarms.createPowerAlarm(vCenter);
+		PerfMgr.setUp();
+//		powerOffAlarm = AlarmMgr.createPowerAlarm(vCenter);
 		
 	}
 	
 	public void printStat() throws Exception {
 		for (VHost host : vHosts) 
-			host.pirntVMs();
+			host.print();
 	}
 	
 	public void ping() throws Exception {
@@ -51,31 +52,23 @@ public class AvailabilityManager {
 			host.ping();
 	}
 	
+	public void createSnapshot() throws Exception {
+		for (VHost host : vHosts) {
+			host.createSnapshot();
+		}
+	}
 	public static void main(String[] args) throws Exception {
 		AvailabilityManager manager = new AvailabilityManager("https://130.65.132.150/sdk", "administrator", "12!@qwQW");
-		PerfMgr.setUp();
-		manager.printStat();
-		//manager.ping();
-	/*	
-		ManagedEntity[] mes = new InventoryNavigator(rootFolder).searchManagedEntities("VirtualMachine");
-		if(mes==null || mes.length ==0)
-		{
-			return;
-		}
-		for (int i = 0; i < mes.length; i++)
-		{
-			VirtualMachine vm = (VirtualMachine) mes[i]; 
-			
-			VirtualMachineConfigInfo vminfo = vm.getConfig();
-			VirtualMachineCapability vmc = vm.getCapability();
-			
-			vm.getResourcePool();
-			System.out.println("Hello " + vm.getName());
-			System.out.println("GuestOS: " + vminfo.getGuestFullName());
-			System.out.println("Multiple snapshot supported: " + vmc.isMultipleSnapshotsSupported());
-		}
-		*/
+		
+		// print vHosts and vms performance
+//		manager.printStat();
+		
+//		manager.createSnapshot();
+//		manager.ping();		
+		
+//		powerOffAlarm.removeAlarm();
+		System.out.println("PowerOff State Alarm removed!");
 		vCenter.getServerConnection().logout();
-		System.out.println("end");
+		System.out.println("-Server Disconncted-");
 	}
 }

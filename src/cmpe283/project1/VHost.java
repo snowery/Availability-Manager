@@ -1,10 +1,9 @@
 package cmpe283.project1;
 
-import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.vmware.vim25.InvalidProperty;
 import com.vmware.vim25.ManagedEntityStatus;
-import com.vmware.vim25.RuntimeFault;
 import com.vmware.vim25.mo.HostSystem;
 import com.vmware.vim25.mo.InventoryNavigator;
 import com.vmware.vim25.mo.ManagedEntity;
@@ -14,7 +13,7 @@ import com.vmware.vim25.mo.VirtualMachine;
 public class VHost {
 
 	private HostSystem host;
-	private VM[] vms;
+	private List<VirtualMachine> vms;
 	
 	public VHost(HostSystem host) throws Exception {
 		this.host = host;
@@ -24,44 +23,60 @@ public class VHost {
 			return;
 		}
 		
-		vms = new VM[mes.length];
+		vms = new ArrayList<VirtualMachine>();
 		
 		for (int i = 0; i < mes.length; i++) {
-			vms[i] = new VM((VirtualMachine) mes[i]);
-			//vms[i].powerOn();
+			vms.add((VirtualMachine) mes[i]);
+			//vms.get(i).powerOn();
 		}
 	}
-	
-	// 0: success 1: VM failure 2: Vhost failure
+
 	public void ping() throws Exception {
-		for (int i = 0; i < vms.length; i++) {
-			if (vms[i].ping()) {
-				System.out.println(vms[i].getIP() + ": Vm ping success.");
-				
-			}
-			else {
-				System.out.println(vms[i].getIP() + ": Vm ping failure.");
-				if (host.getOverallStatus() == ManagedEntityStatus.green)
-					System.out.println(getIP() + ": Vhost ping success.");
-				else
-					System.out.println(getIP() + ": Vhost ping failure.");
+		for (int i = 0; i < vms.size(); i++) {
+			if (!VM.ping(vms.get(i))){
+				int n = 0; 
+				while (n < Setting.NumBootHost) {
+					if (Ping.pingIP(getIP())) {
+						System.out.println(getIP() + ": Vhost ping success.");
+						//TODO recover VM from snapshot
+						break;
+					}
+					else {
+						System.out.println(getIP() + ": Vhost ping failure.");
+						//TODO try to restart vhost
+						n++;
+					}
+				}
+				//System.out.println("Vhost is unreachable.");
+				//break;
 			}
 		}
-		
+		//TODO add another available host
+		//TODO migrate Vms
+		//TODO remove this host
+	}
+	
+	
+	
+	public void createSnapshot() throws Exception {
+		if (vms == null) return;
+		for (int i = 0; i < vms.size(); i++) 
+			SnapShotMgr.createSanpshot(vms.get(i));
 	}
 	
 	public String getIP() {
-		return host.getConfig().getNetwork().getVnic()[0].spec.ip.ipAddress;
+		return host.getConfig().getNetwork().getVnic()[0].getSpec().getIp().getIpAddress();
 	}
 	
-	public void pirntVMs() throws Exception {
+	public void print() throws Exception {
+		System.out.println();
 		System.out.println("vHost: " + getIP());
 		PerfMgr.printPerf(host);
 		System.out.println("=========VMs=========");
 		
 		if (vms == null) return;
-		for (int i = 0; i < vms.length; i++) 
-			vms[i].print();
+		for (int i = 0; i < vms.size(); i++) 
+			VM.print(vms.get(i));
 		System.out.println("=================================");
 	}
 	

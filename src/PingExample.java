@@ -11,4 +11,8 @@ public class PingExample
        String result = port.pingHost( host ) ;
        System.out.println( "Ping Result: " + result ) ;
     }
+    
+    public static void main(String[] args) {
+		ping("130.65.132.150");
+	}
 }
