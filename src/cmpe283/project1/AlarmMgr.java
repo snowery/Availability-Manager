@@ -10,13 +10,12 @@ import com.vmware.vim25.mo.ManagedEntity;
 import com.vmware.vim25.mo.ServiceInstance;
 
 public class AlarmMgr {
-	public static AlarmManager alarmMgr;
 	//create alarm on the datacenter, which can be applied to all sub-vms
-	public static Alarm createPowerAlarm(ServiceInstance vc) throws Exception{
+	public static Alarm createPowerAlarm(ServiceInstance si) throws Exception{
 
-		ManagedEntity[] dcs = vc.getRootFolder().getChildEntity();
+		ManagedEntity[] dcs = si.getRootFolder().getChildEntity();
 		
-		alarmMgr = vc.getAlarmManager();
+		AlarmManager alarmMgr = si.getAlarmManager();
 		AlarmSpec spec = new AlarmSpec();
 		StateAlarmExpression expression = createStateAlarmExpression();
 	
@@ -31,19 +30,24 @@ public class AlarmMgr {
 	    as.setToleranceRange(0);
 	    
 	    spec.setSetting(as);
+	    Alarm[] alarms = alarmMgr.getAlarm(dcs[0]);
+	    for (Alarm alarm : alarms) {
+	    	if (alarm.getAlarmInfo().getName().equals(spec.getName()))
+	    		alarm.removeAlarm();
+	    }
 	    Alarm alarm = alarmMgr.createAlarm(dcs[0], spec);
 	    System.out.println("PowerOff State Alarm created!");
 	    Thread.sleep(2000);
 	    return alarm;
 	}
-
+	
 	//set alarm to red when the vm powered off, otherwise, green
 	private static StateAlarmExpression createStateAlarmExpression() {
 		StateAlarmExpression expression = new StateAlarmExpression();
 		expression.setType("VirtualMachine");
 		expression.setStatePath("runtime.powerState");
 		expression.setOperator(StateAlarmOperator.isEqual);
-		expression.setRed("poweredOff");
+		expression.setYellow("poweredOff");
 		return expression;
 	}
 }

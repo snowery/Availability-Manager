@@ -11,16 +11,16 @@ import com.vmware.vim25.PerfProviderSummary;
 import com.vmware.vim25.PerfQuerySpec;
 import com.vmware.vim25.mo.ManagedEntity;
 import com.vmware.vim25.mo.PerformanceManager;
+import com.vmware.vim25.mo.ServiceInstance;
 
 public class PerfMgr {
 	private static PerformanceManager perfMgr;
 	private static HashMap<Integer, PerfCounterInfo> countersInfoMap;
 	private static HashMap<String, Integer> countersMap;
 	private static PerfMetricId[] pmis;
-	private static String[] counters;
 
-	public final static void setUp() throws Exception {
-		perfMgr = AvailabilityManager.vCenter.getPerformanceManager();
+	public final static void setUp(ServiceInstance vCenter) throws Exception {
+		perfMgr = vCenter.getPerformanceManager();
 		PerfCounterInfo[] pcis = perfMgr.getPerfCounter();
 
 		// create map between counter ID and PerfCounterInfo, counter name and ID
@@ -33,15 +33,8 @@ public class PerfMgr {
 							+ pcis[i].getRollupType(), pcis[i].getKey());
 		}
 
-		counters = new String[] {"cpu.usage.average", "cpu.usagemhz.average", "cpu.used.summation",
-				"cpu.wait.summation", "mem.usage.average",
-				"mem.overhead.average", "mem.consumed.average",
-				"net.usage.average", "net.received.average",
-				"net.transmitted.average", "disk.commands.summation",
-				"disk.usage.average", "datastore.datastoreReadBytes.latest",
-				"virtualDisk.readOIO.latest", "virtualDisk.writeOIO.latest"};
-
-		pmis = createPerfMetricId(counters);
+		pmis = createPerfMetricId(Setting.PerfCounters);
+		System.out.println("Performance manager is set up.");
 	}
 
 	public static void printPerf(ManagedEntity me) throws Exception {
@@ -101,7 +94,7 @@ public class PerfMgr {
 
 		System.out.println("ID    Performance Counter                   Unit                Value");
 		System.out.println("---------------------------------------------------------------------");
-		for (String counter : counters) {
+		for (String counter : Setting.PerfCounters) {
 			Integer counterId = countersMap.get(counter);
 			PerfCounterInfo pci = countersInfoMap.get(counterId);
 			String value = null;
